@@ -3,6 +3,7 @@ const input = document.getElementById("user-input");
 const chatBox = document.getElementById("chat-box");
 
 let conversationHistory = [];
+let isProcessing = false;
 
 function appendMessage(role, text) {
   const messageElement = document.createElement("div");
@@ -16,8 +17,15 @@ function appendMessage(role, text) {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   
+  if (isProcessing) return;
+  
   const userMessage = input.value.trim();
   if (!userMessage) return;
+
+  // Prevent multiple submissions
+  isProcessing = true;
+  const submitButton = form.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
 
   // Add user message to UI
   appendMessage("user", userMessage);
@@ -27,7 +35,6 @@ form.addEventListener("submit", async (e) => {
   
   // Clear input
   input.value = "";
-  input.focus();
 
   // Show thinking message
   const thinkingMessage = appendMessage("bot", "Thinking...");
@@ -43,22 +50,21 @@ form.addEventListener("submit", async (e) => {
       }),
     });
 
-    if (!response.ok) {
-      thinkingMessage.textContent = "Failed to get response from server.";
-      return;
-    }
-
     const data = await response.json();
 
-    if (data.result) {
+    if (response.ok && data.result) {
       thinkingMessage.textContent = data.result;
       conversationHistory.push({ role: "bot", text: data.result });
     } else {
-      thinkingMessage.textContent = "Sorry, no response received.";
+      thinkingMessage.textContent = data.error || "Sorry, something went wrong.";
     }
   } catch (error) {
     console.error("Error:", error);
-    thinkingMessage.textContent = "Failed to get response from server.";
+    thinkingMessage.textContent = "Failed to connect to server. Please try again.";
+  } finally {
+    isProcessing = false;
+    submitButton.disabled = false;
+    input.focus();
   }
 });
 

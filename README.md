@@ -18,7 +18,7 @@ A simple chatbot web application powered by Google's Gemini AI API, built for Ha
 
 ## Prerequisites
 
-- Node.js (v14 or higher)
+- Node.js (v18 or higher)
 - NPM or Yarn
 - Google Gemini API Key
 

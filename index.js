@@ -10,6 +10,12 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Validate API key
+if (!process.env.GEMINI_API_KEY) {
+  console.error("Error: GEMINI_API_KEY is not set in environment variables");
+  process.exit(1);
+}
+
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -28,14 +34,19 @@ app.post("/api/chat", async (req, res) => {
   
   try {
     if (!Array.isArray(messages)) {
-      throw new Error("messages must be an array");
+      return res.status(400).json({ error: "messages must be an array" });
     }
 
     // Get the last user message
     const userMessage = messages[messages.length - 1]?.text;
     
     if (!userMessage) {
-      throw new Error("No user message provided");
+      return res.status(400).json({ error: "No user message provided" });
+    }
+
+    // Validate message length
+    if (userMessage.length > 10000) {
+      return res.status(400).json({ error: "Message is too long. Maximum 10000 characters allowed" });
     }
 
     // Get the model
@@ -49,7 +60,7 @@ app.post("/api/chat", async (req, res) => {
     res.status(200).json({ result: text });
   } catch (error) {
     console.error("Error:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: "Failed to generate response. Please try again." });
   }
 });
 
